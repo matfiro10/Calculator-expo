@@ -1,15 +1,32 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 export default function App() {
+  // The second element is a function that REPLACES the value.
+  const [visible, setVisible] = useState(true);
+
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.container}>
-        <Header />
-        <Body />
-        <Footer />
-      </SafeAreaView>
-    </SafeAreaProvider>
+      <View style={styles.container}>
+        <Pressable onPress={() => setVisible(!visible)} style={styles.button}>
+          <Text style={styles.buttonLabel}>{ visible ? "Hide" : "Show"}</Text>
+        </Pressable>
+
+        {/* Rendered only when "visible" is true. */}
+        {visible && (
+          <NameCard 
+            name="Jan Kowalski" 
+            description="Zaawansowane programowanie systemów mobilnych" 
+          />
+        )}
+      </View>
+    );
+}
+
+function NameCard({ name, description } : {name: string, description: string}) {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.nameText}>{name}</Text>
+      <Text style={styles.descriptionText}>{description}</Text>
+    </View>
   );
 }
 
@@ -17,79 +34,42 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    
-  },
-
-  header: {
-    backgroundColor: '#3b3ba4',
-    color: '#d8d8d8',
-    padding: 30,
-  },
-
-  headerText: {
-    fontSize: 26,
-    fontWeight: '500',
-  },
-
-  body: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    
-  },
-
-  bodyBlock: {
-    flex: 1,
-    aspectRatio: 1,
-    marginHorizontal: 10,
-    backgroundColor: 'rgb(201, 234, 239)',
-    borderRadius: 10,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
-
-  bodyBlockText: {
-    fontSize: 24,
-    fontWeight: '500',
+  button: {
+    backgroundColor: '#006d77',
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    borderRadius: 8,
+    marginBottom: 16,
   },
-
-  footer: {
-    backgroundColor: 'rgba(232, 232, 232, 0.8)',
-    padding: 15,
+  buttonLabel: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  card: {
+    backgroundColor: '#f2f7f4',
+    borderWidth: 1,
+    borderColor: '#4d908e',
+    borderRadius: 12,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 320,
+  },
+  nameText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0e2a47',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  descriptionText: {
+    fontSize: 12,
+    color: '#5a6b7c',
+    textAlign: 'center',
   },
 });
-
-
-function Header() {
-  return (
-    <View style = {styles.header}>
-      <Text style = {styles.headerText}>Header</Text>
-    </View>
-  );
-}
-
-function Body() {
-  return (
-    <View style = {styles.body}>
-      <BodyBlock text='A'/>
-      <BodyBlock text='B'/>
-      <BodyBlock text='C'/>
-    </View>
-  );
-}
-
-function BodyBlock({ text }: { text: string }) {
-  return (
-    <View style = {styles.bodyBlock}>
-      <Text style = {styles.bodyBlockText}>{text}</Text>
-    </View>
-  );
-}
-
-function Footer() {
-  return (
-    <View style = {styles.footer}>
-      <Text>Footer</Text>
-    </View>
-  );
-}
