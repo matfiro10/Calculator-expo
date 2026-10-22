@@ -1,75 +1,148 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { Pressable, StyleSheet, Text, View, ScrollView } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+
 export default function App() {
-  // The second element is a function that REPLACES the value.
-  const [visible, setVisible] = useState(true);
+  const [displayText, setDisplayText] = useState('');
+
+  const handlePress = (val: string) => {
+    setDisplayText((prev) => {
+      return prev + val;
+    });
+  };
 
   return (
-      <View style={styles.container}>
-        <Pressable onPress={() => setVisible(!visible)} style={styles.button}>
-          <Text style={styles.buttonLabel}>{ visible ? "Hide" : "Show"}</Text>
-        </Pressable>
-
-        {/* Rendered only when "visible" is true. */}
-        {visible && (
-          <NameCard 
-            name="Jan Kowalski" 
-            description="Zaawansowane programowanie systemów mobilnych" 
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          <CalcDisplay text={displayText} />
+          <ButtonsRow 
+            buttons={['7', '8', '9', '/']} 
+            onButtonPress={handlePress} 
           />
-        )}
-      </View>
-    );
+        </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
+  );
 }
 
-function NameCard({ name, description } : {name: string, description: string}) {
+function CalcDisplay({ text }: { text: string }) {
+  const scrollRef = useRef<ScrollView>(null); 
+
   return (
-    <View style={styles.card}>
-      <Text style={styles.nameText}>{name}</Text>
-      <Text style={styles.descriptionText}>{description}</Text>
+    <View style={styles.display}>
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+      >
+        <Text 
+          numberOfLines={1} 
+          adjustsFontSizeToFit 
+          style={styles.displayText}
+        >
+          {text}
+        </Text>
+      </ScrollView>
     </View>
   );
 }
 
+function ButtonsRow({
+  buttons,
+  onButtonPress,
+}: {
+  buttons: string[];
+  onButtonPress: (val: string) => void;
+}) {
+  return (
+    <View style={styles.buttonsRow}>
+      {buttons.map((label) => (
+        <CalcButton 
+          key={label} 
+          label={label} 
+          onPress={() => onButtonPress(label)} 
+        />
+      ))}
+    </View>
+  );
+}
+
+function CalcButton({
+  label,
+  onPress,
+}: {
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.button,
+        pressed && styles.buttonPressed,
+      ]}
+      onPress={onPress}
+    >
+      <Text style={styles.buttonText}>{label}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: '4%',
+    paddingTop: '4%',
+  },
+  display: {
+    width: '100%',
+    aspectRatio: 4,
+    backgroundColor: '#f2f3f5',
+    borderRadius: 14,
+    paddingHorizontal: '4%',
     justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: '4%',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'flex-end', 
+    alignItems: 'center',     
+  },
+  displayText: {
+    color: '#244b70',
+    fontSize: 40,
+    fontWeight: '400',
+    fontVariant: ['tabular-nums'],
+    includeFontPadding: false,
+  },
+  buttonsRow: {
+    width: '100%',
+    flexDirection: 'row',
+    marginBottom: '2.5%',
   },
   button: {
-    backgroundColor: '#006d77',
-    paddingVertical: 10,
-    paddingHorizontal: 28,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  buttonLabel: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  card: {
-    backgroundColor: '#f2f7f4',
-    borderWidth: 1,
-    borderColor: '#4d908e',
-    borderRadius: 12,
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    flex: 1,
+    aspectRatio: 1, 
     alignItems: 'center',
-    width: '100%',
-    maxWidth: 320,
+    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: '#eef1f4',
+    marginHorizontal: '1.2%',
   },
-  nameText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0e2a47',
-    marginBottom: 4,
-    textAlign: 'center',
+  buttonPressed: {
+    backgroundColor: '#d8dee6',
   },
-  descriptionText: {
-    fontSize: 12,
-    color: '#5a6b7c',
-    textAlign: 'center',
+  buttonText: {
+    color: '#244b70',
+    fontSize: 26,
+    fontWeight: '500',
   },
 });
