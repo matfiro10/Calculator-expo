@@ -1,45 +1,32 @@
-import React, { useState, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View, ScrollView, useWindowDimensions, StyleProp, ViewStyle } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, useWindowDimensions, StyleProp, ViewStyle } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import * as SplashScreen from 'expo-splash-screen';
+import { Key, BASIC, EXTENDED } from './src/keys';
+import { CalculatorKey } from './src/components/CalculatorKey';
+import { useCalculator } from './src/hooks/useCalculator';
 
-const calcButtons = [
-  ['AC', '+-', '%', '/'],
-  ['7', '8', '9', 'x'],
-  ['4', '5', '6', '-'],
-  ['1', '2', '3', '+'],
-  ['0', '.', '<=', '='],
-];
-
-const calcButtonsExt = [
-  ['(', ')'],
-  ['^2', 'sqrt'],
-  ['x^y', '1/x'],
-  ['pi', 'e'],
-  ['sin', 'cos'],
-  ['tan', 'rad'],
-];
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function App() {
-  const [displayText, setDisplayText] = useState('');
+  const { displayText, press } = useCalculator();
   const { width, height } = useWindowDimensions();
   const landscape = width > height;
 
-  const handlePress = (val: string) => {
-    if (val === 'AC') setDisplayText('');
-    else if (val === '<=') setDisplayText((prev) => prev.slice(0, -1));
-    else setDisplayText((prev) => prev + val);
-  };
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <CalcDisplay text={displayText} landscape={landscape} />
-          
+
           <View style={landscape ? styles.keypadsRow : styles.keypadsColumn}>
-            <Keypad buttonsMatrix={calcButtons} onButtonPress={handlePress} style={{ flex: 4 }} />
+            <Keypad buttonsMatrix={BASIC} onButtonPress={press} style={{ flex: 4 }} />
             {landscape && (
-              <Keypad buttonsMatrix={calcButtonsExt} onButtonPress={handlePress} style={{ flex: 2 }} />
+              <Keypad buttonsMatrix={EXTENDED} onButtonPress={press} style={{ flex: 2 }} />
             )}
           </View>
         </View>
@@ -49,7 +36,7 @@ export default function App() {
 }
 
 function CalcDisplay({ text, landscape }: { text: string; landscape: boolean }) {
-  const scrollRef = useRef<ScrollView>(null); 
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
   return (
     <View style={[styles.display, landscape && styles.displayLandscape]}>
@@ -60,9 +47,9 @@ function CalcDisplay({ text, landscape }: { text: string; landscape: boolean }) 
         contentContainerStyle={styles.scrollContent}
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
       >
-        <Text 
-          numberOfLines={1} 
-          adjustsFontSizeToFit 
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
           style={[styles.displayText, landscape && styles.displayTextLandscape]}
         >
           {text}
@@ -77,18 +64,14 @@ function Keypad({
   onButtonPress,
   style,
 }: {
-  buttonsMatrix: string[][];
-  onButtonPress: (val: string) => void;
+  buttonsMatrix: Key[][];
+  onButtonPress: (item: Key) => void;
   style?: StyleProp<ViewStyle>;
 }) {
   return (
     <View style={[styles.keypad, style]}>
       {buttonsMatrix.map((row, idx) => (
-        <ButtonsRow 
-          key={idx}
-          buttons={row}
-          onButtonPress={onButtonPress} 
-        />
+        <ButtonsRow key={idx} buttons={row} onButtonPress={onButtonPress} />
       ))}
     </View>
   );
@@ -98,39 +81,15 @@ function ButtonsRow({
   buttons,
   onButtonPress,
 }: {
-  buttons: string[];
-  onButtonPress: (val: string) => void;
+  buttons: Key[];
+  onButtonPress: (item: Key) => void;
 }) {
   return (
     <View style={styles.buttonsRow}>
-      {buttons.map((label) => (
-        <CalcButton 
-          key={label} 
-          label={label} 
-          onPress={() => onButtonPress(label)} 
-        />
+      {buttons.map((item) => (
+        <CalculatorKey key={item.label} item={item} onPress={onButtonPress} />
       ))}
     </View>
-  );
-}
-
-function CalcButton({
-  label,
-  onPress,
-}: {
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.button,
-        pressed && styles.buttonPressed,
-      ]}
-      onPress={onPress}
-    >
-      <Text style={styles.buttonText}>{label}</Text>
-    </Pressable>
   );
 }
 
@@ -160,8 +119,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'flex-end', 
-    alignItems: 'center',     
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
   displayText: {
     color: '#244b70',
@@ -192,20 +151,5 @@ const styles = StyleSheet.create({
     gap: 6,
     width: '100%',
     flexDirection: 'row',
-  },
-  button: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    backgroundColor: '#eef1f4',
-  },
-  buttonPressed: {
-    backgroundColor: '#d8dee6',
-  },
-  buttonText: {
-    color: '#244b70',
-    fontSize: 20,
-    fontWeight: '500',
   },
 });

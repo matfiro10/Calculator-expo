@@ -21,6 +21,22 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/calculator-splash-icon.png",
+          "imageWidth": 200,
+          "backgroundColor": "#ffffff",
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#101418"
+          }
+        }
+      ],
+      "expo-status-bar",
+      "expo-build-properties"
+    ]
   }
 }
