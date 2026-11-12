@@ -1,32 +1,58 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, useWindowDimensions, StyleProp, ViewStyle } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { Key, BASIC, EXTENDED } from './src/keys';
 import { CalculatorKey } from './src/components/CalculatorKey';
 import { useCalculator } from './src/hooks/useCalculator';
+import { ExpressionError } from './src/logic/evaluate';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function App() {
-  const { displayText, press } = useCalculator();
+  const { displayText, isResult, press } = useCalculator();
+  const [error, setError] = useState<string | null>(null);
   const { width, height } = useWindowDimensions();
   const landscape = width > height;
 
   useEffect(() => {
+  const timer = setTimeout(() => {
     SplashScreen.hideAsync().catch(() => {});
-  }, []);
+  }, 1000);
+  return () => clearTimeout(timer);
+}, []);
+
+  const handlePress = (key: Key) => {
+    if (error) {
+      setError(null);
+    }
+
+    try {
+      press(key);
+    } catch (err) {
+      if (err instanceof ExpressionError) {
+        setError(err.message);
+      } else {
+        setError('Błąd obliczeń');
+      }
+    }
+  };
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          <CalcDisplay text={displayText} landscape={landscape} />
+          <CalcDisplay
+            text={displayText}
+            error={error}
+            isResult={isResult}
+            landscape={landscape}
+          />
 
           <View style={landscape ? styles.keypadsRow : styles.keypadsColumn}>
-            <Keypad buttonsMatrix={BASIC} onButtonPress={press} style={{ flex: 4 }} />
+            <Keypad buttonsMatrix={BASIC} onButtonPress={handlePress} style={{ flex: 4 }} />
             {landscape && (
-              <Keypad buttonsMatrix={EXTENDED} onButtonPress={press} style={{ flex: 2 }} />
+              <Keypad buttonsMatrix={EXTENDED} onButtonPress={handlePress} style={{ flex: 2 }} />
             )}
           </View>
         </View>
@@ -35,7 +61,17 @@ export default function App() {
   );
 }
 
-function CalcDisplay({ text, landscape }: { text: string; landscape: boolean }) {
+function CalcDisplay({
+  text,
+  error,
+  isResult,
+  landscape,
+}: {
+  text: string;
+  error: string | null;
+  isResult: boolean;
+  landscape: boolean;
+}) {
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
   return (
@@ -49,12 +85,24 @@ function CalcDisplay({ text, landscape }: { text: string; landscape: boolean }) 
       >
         <Text
           numberOfLines={1}
-          adjustsFontSizeToFit
-          style={[styles.displayText, landscape && styles.displayTextLandscape]}
+          style={[
+            styles.displayText,
+            landscape && styles.displayTextLandscape,
+            isResult && styles.displayTextResult,
+          ]}
         >
           {text}
         </Text>
       </ScrollView>
+
+      {error ? (
+        <Text
+          numberOfLines={1}
+          style={[styles.errorText, landscape && styles.errorTextLandscape]}
+        >
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -124,13 +172,32 @@ const styles = StyleSheet.create({
   },
   displayText: {
     color: '#244b70',
-    fontSize: 40,
+    fontSize: 44,
     fontWeight: '400',
     fontVariant: ['tabular-nums'],
     includeFontPadding: false,
   },
   displayTextLandscape: {
-    fontSize: 32,
+    fontSize: 34,
+  },
+  displayTextResult: {
+    color: '#3a4552',
+    fontWeight: '600',
+  },
+  errorText: {
+    position: 'absolute',
+    bottom: 8,
+    right: '4%',
+    left: '4%',
+    color: '#c93b3b',
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'right',
+    includeFontPadding: false,
+  },
+  errorTextLandscape: {
+    bottom: 4,
+    fontSize: 12,
   },
   keypadsColumn: {
     flex: 5,
